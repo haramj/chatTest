@@ -16,15 +16,30 @@ socket.on('message', (message) => {
 
 // 전송 버튼 클릭 시 입력된 글을 message 이벤트로 보냄
 function sendMessage() {
+    if (currentRoom === ''){
+        alert('방을 선택해주세요.');
+        return ;
+    }
     const message = $('#message').val();
+    const data = { message, nickname, room: currentRoom };
     $('#chat').append(`<div>나 : ${message}</div>`);
-    socket.emit('message',{message,nickname});
+    roomSocket.emit('message',data);
+    return false;
 }
 
 function createRoom() {
     const room = prompt('생성할 방의 이름을 입력해주세요.');
     roomSocket.emit('createRoom', { room, nickname });
 }
+
+socket.on('notice', (data) => {
+    $('#notice').append(`<div>${data.message}</div>`);
+})
+
+roomSocket.on('message', (data) => {
+    console.log(data);
+    $('#chat').append(`<div>${data.message}</div>`);
+});
 
 roomSocket.on("rooms", (data) => {
     console.log(data);
@@ -34,3 +49,8 @@ roomSocket.on("rooms", (data) => {
     });
 });
 
+function joinRoom(room) {
+    roomSocket.emit('joinRoom', { room, nickname, toLeaveRoom: currentRoom });
+    $('#chat').html('');
+    currentRoom = room; // 현재 방 변경
+}
